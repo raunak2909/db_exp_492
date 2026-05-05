@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:db_exp_492/note_model.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -43,22 +44,47 @@ class DBHelper {
   }
 
   ///queries
-  Future<bool> insertNote({required String title, required String desc}) async {
+  Future<bool> insertNote({required NoteModel newNote}) async {
     Database db = await initDB();
-    int rowsEffected = await db.insert(TABLE_NOTE, {
-      COLUMN_NOTE_TITLE : title,
-      COLUMN_NOTE_DESC : desc,
-      COLUMN_NOTE_CREATED_AT: DateTime.now().millisecondsSinceEpoch.toString()
-    });
+    int rowsEffected = await db.insert(TABLE_NOTE, newNote.toMap());
+    return rowsEffected > 0;
+  }
+
+  Future<List<NoteModel>> fetchAllNotes() async {
+    Database db = await initDB();
+    List<Map<String, dynamic>> mNotes = await db.query(TABLE_NOTE);
+    List<NoteModel> allNotes = [];
+
+    /*for(int i = 0; i<mNotes.length; i++){
+      NoteModel eachNote = NoteModel.fromMap(mNotes[i]);
+      allNotes.add(eachNote);
+    }*/
+
+    for(Map<String, dynamic> eachMap in mNotes){
+      allNotes.add(NoteModel.fromMap(eachMap));
+    }
+
+    return allNotes;
+  }
+
+  Future<bool> updateNote({
+    required String updatedTitle,
+    required String updatedDesc,
+    required int id,
+  }) async {
+    Database db = await initDB();
+    int rowsEffected = await db.update(TABLE_NOTE, {
+      COLUMN_NOTE_TITLE: updatedTitle,
+      COLUMN_NOTE_DESC: updatedDesc,
+    }, where: "$COLUMN_NOTE_ID = $id");
+    return rowsEffected > 0;
+  }
+
+  Future<bool> deleteNote({required int id}) async {
+    Database db = await initDB();
+    int rowsEffected = await db.delete(TABLE_NOTE,
+        where: "$COLUMN_NOTE_ID = ?",
+        whereArgs: ["$id"]);
     return rowsEffected>0;
   }
-
-  Future<List<Map<String, dynamic>>> fetchAllNotes() async {
-    Database db = await initDB();
-    return await db.query(TABLE_NOTE);
-  }
-
-  updateNote() {}
-
-  deleteNote() {}
 }
