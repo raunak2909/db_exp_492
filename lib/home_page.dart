@@ -44,15 +44,19 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       IconButton(
                         onPressed: () async {
-                          bool isUpdated = await dbHelper.updateNote(
-                            updatedTitle: "Update Note",
-                            updatedDesc: "Update Desc",
-                            id: notes[index].id!,
+
+                          titleController.text = notes[index].title;
+                          descController.text = notes[index].desc;
+
+                          showModalBottomSheet(
+                            //isDismissible: false,
+                            //enableDrag: false,
+                            context: context,
+                            builder: (_) {
+                              return getBottomSheetUI(isUpdate: true, index: index);
+                            },
                           );
 
-                          if (isUpdated) {
-                            getAllNotes();
-                          }
                         },
                         icon: Icon(Icons.edit),
                       ),
@@ -120,85 +124,13 @@ class _HomePageState extends State<HomePage> {
           titleController.text = "";
           descController.clear();
 
+
           showModalBottomSheet(
             //isDismissible: false,
             //enableDrag: false,
             context: context,
             builder: (_) {
-              return Container(
-                padding: EdgeInsets.symmetric(vertical: 21, horizontal: 11),
-                width: double.infinity,
-                child: Column(
-                  children: [
-                    Text(
-                      'Add Note',
-                      style: TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 11),
-                    TextField(
-                      controller: titleController,
-                      decoration: InputDecoration(
-                        hintText: "Enter your title here..",
-                        labelText: "Title",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(21),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 11),
-                    TextField(
-                      controller: descController,
-                      maxLines: 7,
-                      decoration: InputDecoration(
-                        alignLabelWithHint: true,
-                        hintText: "Enter your desc here..",
-                        labelText: "Desc",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(21),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 11),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            ///insertNote
-                            bool isAdded = await dbHelper.insertNote(
-                              newNote: NoteModel(
-                                title: titleController.text,
-                                createdAt: DateTime.now().millisecondsSinceEpoch,
-                                desc: descController.text,
-                              ),
-                            );
-
-                            if (isAdded) {
-                              getAllNotes();
-                              Navigator.pop(context);
-                            }
-                          },
-                          child: Text("Save"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 11),
-                        OutlinedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: Text("Cancel"),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
+              return getBottomSheetUI();
             },
           );
         },
@@ -206,6 +138,97 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  Widget getBottomSheetUI({bool isUpdate = false, int index = -1}){
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 21, horizontal: 11),
+      width: double.infinity,
+      child: Column(
+        children: [
+          Text(
+            '${isUpdate ? 'Update' : 'Add'} Note',
+            style: TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 11),
+          TextField(
+            controller: titleController,
+            decoration: InputDecoration(
+              hintText: "Enter your title here..",
+              labelText: "Title",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(21),
+              ),
+            ),
+          ),
+          SizedBox(height: 11),
+          TextField(
+            controller: descController,
+            maxLines: 7,
+            decoration: InputDecoration(
+              alignLabelWithHint: true,
+              hintText: "Enter your desc here..",
+              labelText: "Desc",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(21),
+              ),
+            ),
+          ),
+          SizedBox(height: 11),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  ///insertNote
+
+                  bool taskDone = false;
+
+                  if(isUpdate){
+                    taskDone = await dbHelper.updateNote(
+                      updatedTitle: titleController.text,
+                      updatedDesc: descController.text,
+                      id: notes[index].id!,
+                    );
+                  } else {
+                    taskDone = await dbHelper.insertNote(
+                      newNote: NoteModel(
+                        title: titleController.text,
+                        createdAt: DateTime.now().millisecondsSinceEpoch,
+                        desc: descController.text,
+                      ),
+                    );
+                  }
+
+                  if (taskDone) {
+                    getAllNotes();
+                    Navigator.pop(context);
+                  }
+                },
+                child: Text("Save"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              SizedBox(width: 11),
+              OutlinedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text("Cancel"),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
 }
+
+
 
 /* */
